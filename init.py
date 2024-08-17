@@ -68,7 +68,8 @@ def main():
 def download(repo, rev, file, models_dir):
     cmd = f"huggingface-cli download --local-dir '{models_dir}' --revision '{rev}' '{repo}'"
     if file:
-        cmd += f" '{file}'"
+        files = file.split(',')
+        cmd += ''.join(f" '{f}'" for f in files)
     run(cmd)
 
 
