@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -68,9 +69,18 @@ def main():
 def download(repo, rev, file, models_dir):
     cmd = f"huggingface-cli download --local-dir '{models_dir}' --revision '{rev}' '{repo}'"
     if file:
-        files = file.split(',')
+        files = derive_files(file)
         cmd += ''.join(f" '{f}'" for f in files)
     run(cmd)
+
+
+def derive_files(fn):
+    m = re.match(r'(.*?)(\d+)-of-(\d+).gguf$', fn)
+    if not m:
+        return [fn]
+    prefix, _, nfiles = m.groups()
+    nfiles = int(nfiles)
+    return [f'{prefix}{i:05d}-of-{nfiles:05d}.gguf' for i in range(1,nfiles+1)]
 
 
 def parse_hf_url(url):

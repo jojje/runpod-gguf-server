@@ -57,3 +57,8 @@ The startup script finds that out automatically. If the koboldcpp startup runs i
 ### Q6. The pod reports some error, but does not terminate, why?
 
 In order to avoid infinite crash looping. Runpod restarts a pod when it crashes, which is rather annoying if you're trying to find out _why_ the pod crashed. For instance, if the downloaded model weights are corrupt, or there is some bug in koboldcpp. As such, when an unrecoverable error happens, the startup script will just notify you of this fact in the pod logs, and then pause, giving you the opportunity to figure out what's wrong. Such as SSH:ing into the pod in order to look around for the root cause.
+
+### Q7. Does it handle gguf file splits?
+
+Yes. As long as the files follow the standard naming convention of `<prefix>-\d{5}-of-\d{5}.gguf` such as "model-00001-of-00004.gguf". Like llama.cpp it will understand the model is comprised of four files in this case and download those files.
+
