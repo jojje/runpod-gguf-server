@@ -145,7 +145,7 @@ def autotune_ctx_fallback(koboldcmd:str, model:str, context_length:int, quantkv:
         print('[!] Failed to launch kobold model serving with a context size of', context_length)
         print('[*] Starting search optimization for the largest context size that will fit in the GPU VRAM')
 
-        llamacmd = f"llama-cli -m '{model}' --predict 5 -ngl 999 --log-disable"
+        llamacmd = f"llama-cli -m '{model}' --predict 5 -ngl 999 --log-disable -p foo"
 
         if quantkv in quant_map:
             v =  quant_map[quantkv]
