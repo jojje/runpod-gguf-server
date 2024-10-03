@@ -12,6 +12,7 @@ test:
 	-e MODEL=$(TEST_MODEL) \
 	-e PUBLIC_KEY=123 \
 	-e CTX=16384 \
+	-e QUANTKV=1 \
 	-e DRYRUN=1 \
 	$(IMAGE)
 

@@ -24,6 +24,7 @@ def parse_args():
     ctx = int(os.getenv('CTX', 8192))
     port = int(os.getenv('PORT', 5002))
     args = os.getenv('ARGS', '--usecublas mmq --gpulayers 999 --flashattention --ignoremissing --skiplauncher')
+    quantkv = os.getenv('QUANTKV')
     dry_run = bool(os.getenv('DRYRUN', False))
     model = os.getenv('MODEL')
 
@@ -32,6 +33,8 @@ def parse_args():
     parser.add_argument('--args', default=args, metavar='s',
                         help='additional koboldcpp arguments and options [env: ARGS]')
     parser.add_argument('--port', default=port, metavar='n', help='port to bind koboldcpp to [env: PORT]')
+    parser.add_argument('--quantkv', choices=(0,1,2), default=quantkv, type=int, metavar='n',
+                        help='KV cache quantization to use. 0=fp16, 1=q8, 2=q4 [env: QUANTKV]')
     parser.add_argument('--dry-run', action='store_true', default=dry_run, help='simulate bootstrapping [env: DRYRUN]')
     parser.add_argument('--model', default=model, metavar='url/path', required=not model,
                         help='single HF file, repo or directory (copy it from HF repo web UI or point it to a local '
@@ -58,7 +61,7 @@ def main():
             model_path = find_model_path(opts.model_dir)
         else:
             model_path = opts.model
-        launch(model_path, opts.args, opts.ctx, opts.port)
+        launch(model_path, opts.args, opts.ctx, opts.port, opts.quantkv)
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):  # allow user to manually terminate
             sys.exit(1)
@@ -113,7 +116,7 @@ def find_model_path(model_dir):
                      ' . Check the repo on huggingface')
 
 
-def launch(model_path, args:str, context_length:int, port:int):
+def launch(model_path, args:str, context_length:int, port:int, quantkv:int):
     log("For increased security, create a direct ssh tunnel manually with command:")
     log(f"ssh root@{PUBLIC_IP} -p {SSH_PORT} -L {port}:localhost:{port}")
     log(f"instead of relying on runpod or cloudflare MITM proxies, and point the browser to http://localhost:{port}/")
@@ -122,13 +125,17 @@ def launch(model_path, args:str, context_length:int, port:int):
         "to ensure no obvious MITM attempt)")
     print('-' * 78)
 
+    if quantkv is not None:
+        args += f" --flashattention --quantkv {quantkv}"
     cmd = (f"koboldcpp --contextsize {context_length} --host 0.0.0.0 --port {port} --model '{model_path}' {args}")
-    with autotune_ctx_fallback(cmd, model_path, context_length):
+    with autotune_ctx_fallback(cmd, model_path, context_length, quantkv):
         run(cmd)
 
 
 @contextmanager
-def autotune_ctx_fallback(koboldcmd:str, model:str, context_length:int):
+def autotune_ctx_fallback(koboldcmd:str, model:str, context_length:int, quantkv:int):
+    quant_map = {0: 'f16', 1: 'q8_0', 2: 'q4_0'}
+
     started = time()
     try:
         yield
@@ -139,6 +146,11 @@ def autotune_ctx_fallback(koboldcmd:str, model:str, context_length:int):
         print('[*] Starting search optimization for the largest context size that will fit in the GPU VRAM')
 
         llamacmd = f"llama-cli -m '{model}' --predict 5 -ngl 999 --log-disable"
+
+        if quantkv in quant_map:
+            v =  quant_map[quantkv]
+            llamacmd += f" --flash-attn --cache-type-k {v} --cache-type-v {v}"
+
         largest_ctxlen = search(128, context_length, assessor(llamacmd))
 
         if largest_ctxlen is None:

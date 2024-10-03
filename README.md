@@ -11,6 +11,7 @@ Takes the following environment variables as configuration (with defaults shown)
 * `CTX` - max context length for inference. Lower it if you run into GPU out of memory crash (default: `8192`)
 * `ARGS` - additional koboldcpp arguments in addition to the corresponding above ones. (default: `--usecublas mmq --gpulayers 999 --flashattention --ignoremissing --skiplauncher`)
 * `PORT` - local bind port for koboldcpp in the container (default: `5002`)
+* `QUANTKV` - KV cache quantization. When provided quantizes the cache. Valid values are the same as koboldcpp; 0, 1, or 2, where 0 = fp16, 1 = q8, 2 = q4. Disabled by default.
 * `DRYRUN` - for development and testing. Runs the container without side-effects.
 
 ## How to use:
