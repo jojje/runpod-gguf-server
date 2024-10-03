@@ -26,7 +26,7 @@ RUN mkdir /opt/cmake && cd /opt/cmake \
 
 
 # use a fast model downloader
-RUN pip3 install "huggingface_hub[cli]" "huggingface_hub[hf_transfer]"
+RUN pip3 install "huggingface_hub[cli]" "huggingface_hub[hf_transfer]" hf-transfer
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 # use koboldcpp for model serving
