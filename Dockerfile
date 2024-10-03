@@ -7,7 +7,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # add llamacpp for trouble shooting and auto-tuning
-ENV LLAMACPP="b3599"
+ENV LLAMACPP="b3870"
 RUN cd /opt \
  && git clone https://github.com/ggerganov/llama.cpp \
  && cd llama.cpp \
@@ -30,7 +30,7 @@ RUN pip3 install "huggingface_hub[cli]" "huggingface_hub[hf_transfer]"
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 # use koboldcpp for model serving
-ENV KOBOLD=1.72
+ENV KOBOLD=1.75.2
 RUN curl -Lo /usr/local/bin/koboldcpp \
     https://github.com/LostRuins/koboldcpp/releases/download/v${KOBOLD}/koboldcpp-linux-x64-cuda1210 \
  && chmod +x /usr/local/bin/koboldcpp
